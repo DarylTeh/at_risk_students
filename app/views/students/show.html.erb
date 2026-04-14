@@ -1,0 +1,137 @@
+<div class="student-page">
+  <div class="student-card">
+    <header class="student-card__header">
+      <div>
+        <h1><%= @student.name %></h1>
+        <p class="student-meta">Course: <%= @student.course.name %></p>
+      </div>
+      <span class="status-badge <%= @student.at_risk? ? 'risk' : 'safe' %>">
+        <%= @student.at_risk? ? '⚠️ At Risk' : '✅ Good' %>
+      </span>
+    </header>
+
+    <div class="student-grid">
+      <div class="student-data-block">
+        <p class="label">Progress</p>
+        <p class="value"><%= @student.progress %>%</p>
+      </div>
+      <div class="student-data-block">
+        <p class="label">Last Active</p>
+        <p class="value"><%= @student.last_active_at %></p>
+      </div>
+      <div class="student-data-block">
+        <p class="label">Course Level</p>
+        <p class="value"><%= @student.course.level %></p>
+      </div>
+    </div>
+
+    <section class="metrics-section">
+      <h2>Holistic Student Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <p class="metric-label">Risk score</p>
+          <p class="metric-value"><%= @student.risk_score %> / 3</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">Health</p>
+          <p class="metric-value"><%= @student.learning_health_label %> (<%= @student.learning_health_score %>)</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">Engagement</p>
+          <p class="metric-value"><%= @student.engagement_level %> (<%= @student.engagement_score %>)</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">Inactive days</p>
+          <p class="metric-value"><%= @student.days_inactive %></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <h2>Student Profile</h2>
+      <p><strong>Age:</strong> <%= @student.display_age %></p>
+      <p><strong>Major:</strong> <%= @student.display_major %></p>
+      <p><strong>Background:</strong> <%= @student.display_profile_summary %></p>
+      <p><strong>Previous coursework:</strong> <%= @student.display_previous_courses %></p>
+      <p><strong>Learning style:</strong> <%= @student.display_learning_style %></p>
+      <p><strong>Goals:</strong> <%= @student.display_goals %></p>
+    </section>
+
+    <section class="info-section">
+      <h2>Course Overview</h2>
+      <p><%= @student.course.description %></p>
+      <p><strong>Topics:</strong> <%= @student.course.key_topics %></p>
+    </section>
+
+    <section class="info-section">
+      <h2>Risk Reasons</h2>
+      <ul class="risk-list">
+        <% @student.risk_factors.each do |r| %>
+          <li><%= r %></li>
+        <% end %>
+      </ul>
+    </section>
+
+    <section class="info-section">
+      <h2>Recommended Action</h2>
+      <p><%= @student.recommended_action %></p>
+    </section>
+
+    <section class="ai-section" id="ai-suggestion" data-student-id="<%= @student.id %>">
+      <h2>🤖 AI Insights</h2>
+      <div class="ai-loading">
+        <span class="throbber"></span>
+        <span>Generating AI summary, reasoning, and suggested message…</span>
+      </div>
+      <div id="ai-summary" class="ai-block hidden">
+        <h3>Internal summary</h3>
+        <p></p>
+      </div>
+      <div id="ai-reasoning" class="ai-block hidden">
+        <h3>Risk reasoning</h3>
+        <p></p>
+      </div>
+      <div id="ai-message" class="ai-block hidden">
+        <h3>Suggested follow-up</h3>
+        <p></p>
+      </div>
+    </section>
+
+    <div class="actions">
+      <%= link_to "Back", root_path, class: "button secondary" %>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        var aiSection = document.getElementById("ai-suggestion");
+        if (!aiSection) return;
+
+        var summaryEl = document.querySelector("#ai-summary p");
+        var reasoningEl = document.querySelector("#ai-reasoning p");
+        var messageEl = document.querySelector("#ai-message p");
+        var summaryWrapper = document.getElementById("ai-summary");
+        var reasoningWrapper = document.getElementById("ai-reasoning");
+        var messageWrapper = document.getElementById("ai-message");
+        var loadingEl = aiSection.querySelector(".ai-loading");
+        var studentId = aiSection.dataset.studentId;
+
+        fetch("/students/" + studentId + "/ai_message", {
+          headers: { "Accept": "application/json" }
+        })
+          .then(function(response) { return response.json(); })
+          .then(function(data) {
+            loadingEl.classList.add("hidden");
+            summaryEl.textContent = data.summary || "No summary available.";
+            reasoningEl.textContent = data.risk_reasoning || "No reasoning available.";
+            messageEl.textContent = data.follow_up_message || "No follow-up message available.";
+            summaryWrapper.classList.remove("hidden");
+            reasoningWrapper.classList.remove("hidden");
+            messageWrapper.classList.remove("hidden");
+          })
+          .catch(function() {
+            loadingEl.textContent = "Unable to generate AI insights right now. Please refresh or try again later.";
+          });
+      });
+    </script>
+  </div>
+</div>
